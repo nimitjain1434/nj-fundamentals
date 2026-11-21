@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore a sector-aware fundamental score for every Nifty 50 stock.">
+  <title>NJ Fundamental Score (NFS)</title>
+  <script>
+    const launchUrl = new URL(window.location.href);
+    if (launchUrl.searchParams.has('njview')) {
+      launchUrl.searchParams.delete('njview');
+      history.replaceState(history.state, '', launchUrl);
+    }
+  </script>
+  <meta name="theme-color" content="#0c121b">
+  <link rel="icon" type="image/png" href="nj-fundamentals-mark.png">
+  <link rel="stylesheet" href="styles.css?v=scoring-1">
+  <script src="site-mode.js" defer></script>
+  <script src="site-data.js" defer></script>
+  <script src="website-publish.js" defer></script>
+  <script src="data.js" defer></script>
+  <script src="scoring.js?v=1" defer></script>
+  <script src="upstox-scoring.js?v=2" defer></script>
+  <script src="scoring-ui.js?v=3" defer></script>
+  <script src="fundamentals-view.js?v=1" defer></script>
+  <script src="upstox.js?v=3" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="./" aria-label="NJ Fundamentals home">
+        <img class="brand-logo" src="nj-fundamentals-logo.png" alt="NJ Fundamentals" width="1547" height="1017">
+      </a>
+      <nav aria-label="Main navigation">
+        <a class="active" href="#screener">Screener</a>
+        <button type="button" id="method-header">Methodology</button>
+        <button type="button" id="data-settings">Connect Upstox</button>
+      </nav>
+      <span class="status"><i></i> PROTOTYPE</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero" aria-labelledby="page-title">
+      <svg class="hero-art" viewBox="0 0 510 210" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+        <defs>
+          <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0v28" fill="none" stroke="var(--accent)" stroke-opacity=".12"/></pattern>
+          <linearGradient id="fade"><stop stop-color="var(--panel)"/><stop offset="1" stop-color="var(--panel)" stop-opacity="0"/></linearGradient>
+          <linearGradient id="area" x2="0" y2="1"><stop stop-color="var(--accent)" stop-opacity=".16"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient>
+        </defs>
+        <rect width="510" height="210" fill="url(#grid)"/>
+        <path d="M0 194 83 158l39 11 54-34 42 5 48-42 36 15 50-37 34 14 65-52 59-16v188H0Z" fill="url(#area)"/>
+        <path d="M0 194 83 158l39 11 54-34 42 5 48-42 36 15 50-37 34 14 65-52 59-16" fill="none" stroke="var(--accent)" stroke-width="1.8" opacity=".68"/>
+        <path d="M0 204 83 190l39 4 54-15 42 4 48-23 36 7 50-19 34 7 65-23 59-10" fill="none" stroke="var(--gold)" stroke-width="1" stroke-dasharray="4 6" opacity=".45"/>
+        <path d="M451 38v172m-99-134v134m-86-112v112" stroke="var(--accent)" stroke-dasharray="3 5" opacity=".25"/>
+        <g fill="var(--accent)" stroke="var(--panel)" stroke-width="4"><circle cx="266" cy="98" r="4.5"/><circle cx="352" cy="76" r="4.5"/><circle cx="451" cy="38" r="5.5"/></g>
+        <rect width="205" height="210" fill="url(#fade)"/>
+      </svg>
+      <div class="hero-copy">
+        <div class="eyebrow hero-label"><span></span> INDIAN EQUITY RESEARCH</div>
+        <h1 id="page-title">NJ Fundamental Score<span class="hero-period">.</span></h1>
+        <p>Compare business quality, growth, financial strength and valuation across the Nifty 50.</p>
+      </div>
+      <img class="hero-logo" src="nj-fundamentals-logo.png" alt="" width="1547" height="1017" fetchpriority="high">
+      <div class="hero-caption" aria-hidden="true">NFS <span>/</span> 100</div>
+    </section>
+
+    <section class="data-connection" aria-label="Financial data connection">
+      <div><strong>Company financials · Upstox</strong><p id="connection-state" role="status">Checking local connection…</p></div>
+      <button type="button" id="open-financials">Explore financials</button>
+    </section>
+    <section class="data-connection" id="website-publishing" aria-label="Website publishing">
+      <div><strong>Online website</strong><p id="website-publish-status" role="status">Refresh all company data and publish a new snapshot. This can take several minutes.</p></div>
+      <button type="button" id="publish-website">Refresh &amp; publish website</button>
+    </section>
+    <section class="overview" aria-label="Nifty 50 scoring overview">
+      <article><span class="stat-label">STOCKS COVERED</span><div class="stat-value" id="total-stocks"></div><span class="stat-note">Nifty 50 constituents</span></article>
+      <article><span class="stat-label">MEDIAN SCREENING SCORE</span><div class="stat-value" id="median-score"></div><span class="stat-note">Across scored companies only</span></article>
+      <article><span class="stat-label">SCORES 85 AND ABOVE</span><div class="stat-value" id="high-scores"></div><span class="stat-note">Indicative screening scores</span></article>
+    </section>
+
+    <section id="screener" class="screener" aria-labelledby="screener-title">
+      <div class="section-top">
+        <div><div class="eyebrow section-label">01 <span></span> STOCK SCREENER</div>
+        <h2 id="screener-title">Index constituents</h2></div>
+        <label class="control index-control"><span>Index</span><select id="index-select" aria-label="Index"><option value="nifty50">Nifty 50</option></select></label>
+      </div>
+      <div class="demo-note"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M10 9v4m0-6.5v.2"/></svg><span><strong>Business strength + value at the latest price.</strong> Business fundamentals earn up to 60 points; latest-price earnings valuation earns up to 40. Expensive shares lose valuation points. Missing weight is never scaled up. Scores are research screens, with data gaps shown.</span></div>
+      <div class="data-actions"><button type="button" id="refresh-prices">Refresh latest prices</button><span id="price-score-status" class="data-meta" role="status">Prices load automatically.</span></div>
+      <p id="automatic-score-status" class="data-meta" role="status">Loading saved Upstox data… No data entry required.</p>
+      <div class="table-card">
+        <div class="controls">
+          <label class="search">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.3"/><path d="m12.5 12.5 4 4"/></svg>
+            <input type="search" id="search" aria-label="Search company or symbol" placeholder="Search company or symbol">
+          </label>
+          <label class="control"><span class="sr-only">Sector</span><select id="sector"><option value="">All sectors</option></select></label>
+          <label class="control sort-control"><span class="sr-only">Sort by</span><select id="sort"><option value="high">Score: high to low</option><option value="low">Score: low to high</option><option value="name">Company: A to Z</option></select></label>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Company / latest price</th><th scope="col">Price-aware score <small>/ 100</small></th><th scope="col">What drives the score</th><th scope="col"><span class="sr-only">Company details</span></th></tr></thead>
+            <tbody id="stock-rows"></tbody>
+          </table>
+          <div class="empty" id="empty" hidden><strong>No companies found</strong><p>Try a different search or clear your filters.</p><button type="button" id="reset">Clear filters</button></div>
+        </div>
+        <div class="table-footer"><span id="row-count" role="status"></span><a href="https://oicharts.com/indices/nifty-50" target="_blank" rel="noopener noreferrer">Constituent snapshot · 9 Nov 2026 ↗</a></div>
+      </div>
+    </section>
+    <footer class="site-footer"><span>NJ Fundamentals <span class="footer-divider">/</span> NFS prototype</span><button type="button" id="method-footer">Scoring methodology ↗</button></footer>
+  </main>
+
+  <dialog id="detail" aria-labelledby="detail-title">
+    <div class="dialog-head"><span class="eyebrow">NFS <span class="footer-divider">/</span> COMPANY SCORECARD</span><form method="dialog"><button type="submit" class="close" aria-label="Close company details" autofocus>×</button></form></div>
+    <div id="detail-body" class="dialog-body"></div>
+  </dialog>
+  <dialog id="method" aria-labelledby="method-title">
+    <div class="dialog-head"><span class="eyebrow">NFS <span class="footer-divider">/</span> SCORING MODEL</span><form method="dialog"><button type="submit" class="close" aria-label="Close methodology" autofocus>×</button></form></div>
+    <div class="dialog-body">
+      <h2 id="method-title">How NFS works</h2>
+      <h3>v2.0 — price-aware score</h3>
+      <p class="dialog-intro">The default headline now adds up to 60 business points and 40 valuation points. Business pillar proportions remain sector-specific, scaled to 60. The price multiple is latest traded Upstox price / latest annual diluted EPS, with the exchange trade time and financial year shown. It is not TTM or forward P/E. The sector's P/E anchors apply; mining, energy and cement use 25 / 18 / 12 / 8 / 5× at metric scores 0 / 25 / 50 / 75 / 100. Banks use 35 / 25 / 18 / 12 / 8× where no P/E anchors exist.</p>
+      <p class="dialog-intro">Missing weights stay unearned and are never redistributed. A missing business pillar or total coverage below 80% caps the provisional score at 69. Business strength is shown separately as an observed-input diagnostic, along with its covered weight. A high business-strength score can coexist with an expensive-price score. Latest quotes refresh in one batch; quote downloads expire for scoring after 30 minutes, with a maximum last-trade age of seven days. Missing/invalid prices or EPS prevent a price-aware headline score.</p>
+      <p class="dialog-intro">Bajaj Finance's confirmed June 2025 split/bonus factor is applied only to EPS years that still use the old share basis, with an implied-share consistency check. Other unresolved material EPS/PAT share-basis jumps are flagged rather than treated as poor earnings growth. M&M cash conversion uses matching standalone parent-company PAT and cash flow where available, so lending cash flows are not treated as automotive cash conversion.</p>
+      <details class="model-spec"><summary>Previous available-data screen (v1.1, superseded)</summary>
+      <h3>Automatic Upstox screen — the default score</h3>
+      <p class="dialog-intro">The screener downloads existing Upstox data automatically. Its available-data variant uses reported ROCE/ROE, revenue/EPS growth, quick ratio/equity funding, operating cash conversion/history and reported P/E/EV-to-EBITDA. Banks use ROA/ROE, PAT/EPS growth, net NPA/capital where available, NIM/CASA and reported P/B adjusted for ROE plus P/E. It does not call PBT operating profit, total liabilities debt, or a current ratio a historical median.</p>
+      <p class="dialog-intro">Automatic score = points earned on available inputs ÷ available weight × 100, then apply known risk caps. It requires ≥50% weight, four metrics and three pillars. Missing metrics are excluded from this partial calculation and coverage is displayed. These indicative scores are separate from the complete model below; governance, cycle normalization and specialist disclosures remain incomplete. Missing insurer VNB/solvency/embedded-value data can prevent an insurer score. Provider ratio effective dates/basis are not supplied; retrieval dates are shown without inventing price dates. Downloads older than seven days are not scored.</p>
+      </details><h3>Complete analyst model — optional supplementary analysis</h3>
+      <p class="dialog-intro">Five pillars, 20 business models, ten metrics per model. Each pillar splits its weight 60:40 between two metrics. Governance and exceptional risks apply score caps.</p>
+      <div class="demo-note">These are initial NJ analyst assumptions, not a backtested model. Thresholds are absolute scoring anchors, not peer averages or regulatory requirements. Compare scores within the same business model.</div>
+      <h3>Sector weights</h3>
+      <div class="method-table"><table><thead><tr><th>Scorecard</th><th>Profitability</th><th>Growth</th><th>Balance sheet</th><th>Cash / durability</th><th>Valuation</th></tr></thead><tbody id="method-rows"></tbody></table></div>
+      <h3>Calculation and interpretation</h3>
+      <p class="dialog-intro">Each metric is interpolated linearly between values assigned 0, 25, 50, 75 and 100; scores clamp at the endpoints. Points = metric score × weight / 100. E.g. a 75 metric score at 15% weight earns 11.25 points. Add points, apply the lowest risk cap, then round once to one decimal.</p>
+      <p class="dialog-intro">85–100 exceptional; 70–84.9 strong; 55–69.9 mixed; 40–54.9 weak; below 40 high risk / weak. These describe fundamentals and valuation, not expected returns or buy/sell recommendations.</p>
+      <h3>Data and risk rules</h3>
+      <p class="dialog-intro">Publish only with ≥80% weight coverage, ≥50% of every pillar and every critical (*) metric. Missing weight earns no points and is never redistributed. Partial coverage is provisional. Source references, valid reporting dates and user review are mandatory. Financial inputs expire after 550 days, valuation fundamentals after 200 days, prices after 7 days.</p>
+      <p class="dialog-intro">A governance review needs evidence and a date within 100 days. Unknown risk caps the score at 69; material concerns at 59; default, adverse audit, insolvency, non-positive equity or a negative regulatory capital buffer at 39. Interest coverage below 1×, net NPA ≥4% or net debt / EBITDA ≥5× caps at 49. Lowest cap wins. These risk triggers are NJ assumptions.</p>
+      <h3>All metric weights, definitions and scoring anchors</h3>
+      <div id="model-specs"></div>
+      <h3>Research basis</h3>
+      <p class="dialog-intro">The framework draws on <a href="https://www.msci.com/indexes/group/quality-indexes" target="_blank" rel="noopener noreferrer">MSCI quality concepts</a>, <a href="https://www.rbi.org.in/Scripts/PublicationReportDetails.aspx?ID=1327&UrlPage=" target="_blank" rel="noopener noreferrer">RBI banking soundness dimensions</a>, <a href="https://lifeinscouncil.org/consumers/InvestingInInsuranceCompanies" target="_blank" rel="noopener noreferrer">life-insurer solvency disclosures</a>, and <a href="https://www.cfainstitute.org/insights/professional-learning/refresher-readings/2026/evaluating-quality-financial-reports" target="_blank" rel="noopener noreferrer">CFA Institute reporting-quality analysis</a>. Exact weights, anchors, coverage rules and caps are NJ's own design. Regulatory minima must be verified for each entity and date.</p>
+    </div>
+  </dialog>
+  <dialog id="connection-dialog" aria-labelledby="connection-title">
+    <div class="dialog-head"><span class="eyebrow">UPSTOX CONNECTION</span><form method="dialog"><button class="close" aria-label="Close connection settings">×</button></form></div>
+    <div class="dialog-body">
+      <h2 id="connection-title">Connect your Analytics Token</h2>
+      <p class="dialog-intro">Use your existing token from Upstox Developer Apps → Analytics. It is encrypted for your Windows user and stored on this computer.</p>
+      <form id="token-form" autocomplete="off">
+        <label for="analytics-token">Upstox Analytics Token</label>
+        <input id="analytics-token" type="password" autocomplete="off" spellcheck="false" required placeholder="Paste your existing Analytics Token">
+        <div class="data-actions"><button type="submit">Verify and save</button><button type="button" id="disconnect-upstox">Remove saved token</button></div>
+      </form>
+      <p id="token-message" role="status"></p>
+      <p class="dialog-foot">Verification reads TCS ratios. The token is never included in app responses or stored in browser storage. Removing it retains downloaded financial history.</p>
+    </div>
+  </dialog>
+  <dialog id="financials-dialog" aria-labelledby="financials-title">
+    <div class="dialog-head"><span class="eyebrow">COMPANY FINANCIALS</span><form method="dialog"><button class="close" aria-label="Close financials">×</button></form></div>
+    <div class="dialog-body">
+      <h2 id="financials-title">Upstox financial history</h2>
+      <div class="data-actions"><label for="financial-company">Company</label><select id="financial-company"></select><button type="button" id="load-financials">Load financials</button><button type="button" id="refresh-financials">Refresh from Upstox</button></div>
+      <p class="dialog-intro">Financial statements, ownership and corporate actions from Upstox. Downloads are reused for 24 hours. Retrieval times are not reporting dates. Review source definitions before entering values in the sector scorecard.</p>
+      <p id="financials-state" role="status"></p>
+      <div id="financials-content"></div>
+    </div>
+  </dialog>
+</body>
+</html>
